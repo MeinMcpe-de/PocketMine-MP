@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\raklib;
 
 use pocketmine\snooze\SleeperNotifier;
+use pocketmine\thread\NonThreadSafeValue;
 use pocketmine\thread\Thread;
 use raklib\generic\Socket;
 use raklib\generic\SocketException;
@@ -43,7 +44,10 @@ class RakLibServer extends Thread{
 	protected bool $cleanShutdown = false;
 	protected bool $ready = false;
 	protected string $mainPath;
-	public ?RakLibThreadCrashInfo $crashInfo = null;
+	/** @phpstan-var NonThreadSafeValue<RakLibThreadCrashInfo>|null */
+	public ?NonThreadSafeValue $crashInfo = null;
+	/** @phpstan-var NonThreadSafeValue<InternetAddress> */
+	protected NonThreadSafeValue $address;
 
 	/**
 	 * @phpstan-param \ThreadedArray<int, string> $mainToThreadBuffer
@@ -53,13 +57,14 @@ class RakLibServer extends Thread{
 		protected \ThreadedLogger $logger,
 		protected \ThreadedArray $mainToThreadBuffer,
 		protected \ThreadedArray $threadToMainBuffer,
-		protected InternetAddress $address,
+		InternetAddress $address,
 		protected int $serverId,
 		protected int $maxMtuSize,
 		protected int $protocolVersion,
 		protected SleeperNotifier $mainThreadNotifier
 	){
 		$this->mainPath = \pocketmine\PATH;
+		$this->address = new NonThreadSafeValue($address);
 	}
 
 	/**
@@ -79,12 +84,12 @@ class RakLibServer extends Thread{
 	}
 
 	public function getCrashInfo() : ?RakLibThreadCrashInfo{
-		return $this->crashInfo;
+		return $this->crashInfo->deserialize();
 	}
 
 	private function setCrashInfo(RakLibThreadCrashInfo $info) : void{
 		$this->synchronized(function(RakLibThreadCrashInfo $info) : void{
-			$this->crashInfo = $info;
+			$this->crashInfo = new NonThreadSafeValue($info);
 			$this->notify();
 		}, $info);
 	}
@@ -95,7 +100,7 @@ class RakLibServer extends Thread{
 			while(!$this->ready && $this->crashInfo === null){
 				$this->wait();
 			}
-			$crashInfo = $this->crashInfo;
+			$crashInfo = $this->crashInfo->deserialize();
 			if($crashInfo !== null){
 				if($crashInfo->getClass() === SocketException::class){
 					throw new SocketException($crashInfo->getMessage());
@@ -114,7 +119,7 @@ class RakLibServer extends Thread{
 			register_shutdown_function([$this, "shutdownHandler"]);
 
 			try{
-				$socket = new Socket($this->address);
+				$socket = new Socket($this->address->deserialize());
 			}catch(SocketException $e){
 				$this->setCrashInfo(RakLibThreadCrashInfo::fromThrowable($e));
 				return;
