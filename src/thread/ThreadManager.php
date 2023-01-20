@@ -40,9 +40,7 @@ class ThreadManager extends \ThreadedBase{
 		return self::$instance;
 	}
 
-	/**
-	 * @phpstan-var \ThreadedArray<int, Thread|Worker>
-	 */
+	/** @phpstan-var \ThreadedArray<int, Thread|Worker> */
 	private \ThreadedArray $threads;
 
 	private function __construct(){

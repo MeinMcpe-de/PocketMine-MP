@@ -66,9 +66,7 @@ abstract class AsyncTask extends \ThreadedRunnable{
 	/** @var AsyncWorker|null $worker */
 	public $worker = null;
 
-	/**
-	 * @phpstan-var \ThreadedArray<int, string>
-	 */
+	/** @phpstan-var \ThreadedArray<int, string> */
 	public \ThreadedArray $progressUpdates;
 
 	private string|int|bool|null|float $result = null;
