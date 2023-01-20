@@ -23,11 +23,11 @@ declare(strict_types=1);
 
 namespace pocketmine\scheduler;
 
-use pocketmine\utils\AssumptionFailedError;
+use pocketmine\thread\NonThreadSafeValue;
 use function igbinary_serialize;
 use function igbinary_unserialize;
+use function is_null;
 use function is_scalar;
-use function is_string;
 use function spl_object_id;
 
 /**
@@ -69,8 +69,8 @@ abstract class AsyncTask extends \ThreadedRunnable{
 	/** @phpstan-var \ThreadedArray<int, string> */
 	public \ThreadedArray $progressUpdates;
 
-	private string|int|bool|null|float $result = null;
-	private bool $serialized = false;
+	/** @phpstan-var NonThreadSafeValue<mixed>|string|int|bool|float|null */
+	private NonThreadSafeValue|string|int|bool|null|float $result = null;
 	private bool $cancelRun = false;
 	private bool $submitted = false;
 
@@ -113,15 +113,14 @@ abstract class AsyncTask extends \ThreadedRunnable{
 	 * @return mixed
 	 */
 	public function getResult(){
-		if($this->serialized){
-			if(!is_string($this->result)) throw new AssumptionFailedError("Result expected to be a serialized string");
-			return igbinary_unserialize($this->result);
+		if($this->result instanceof NonThreadSafeValue){
+			return $this->result->deserialize();
 		}
 		return $this->result;
 	}
 
 	public function setResult(mixed $result) : void{
-		$this->result = ($this->serialized = !is_scalar($result)) ? igbinary_serialize($result) : $result;
+		$this->result = is_scalar($result) || is_null($result) ? $result : new NonThreadSafeValue($result);
 	}
 
 	public function cancelRun() : void{
