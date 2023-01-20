@@ -45,10 +45,14 @@ class RakLibServer extends Thread{
 	protected string $mainPath;
 	public ?RakLibThreadCrashInfo $crashInfo = null;
 
+	/**
+	 * @phpstan-param \ThreadedArray<int, string> $mainToThreadBuffer
+	 * @phpstan-param \ThreadedArray<int, string> $threadToMainBuffer
+	 */
 	public function __construct(
 		protected \ThreadedLogger $logger,
-		protected \Threaded $mainToThreadBuffer,
-		protected \Threaded $threadToMainBuffer,
+		protected \ThreadedArray $mainToThreadBuffer,
+		protected \ThreadedArray $threadToMainBuffer,
 		protected InternetAddress $address,
 		protected int $serverId,
 		protected int $maxMtuSize,

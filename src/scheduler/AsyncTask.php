@@ -51,15 +51,10 @@ use function spl_object_id;
  * thread, e.g. during {@link AsyncTask::onCompletion()} or {@link AsyncTask::onProgressUpdate()}. This means that
  * whatever you do in onRun() must be able to work without the Server instance.
  *
- * WARNING: Any non-Threaded objects WILL BE SERIALIZED when assigned to members of AsyncTasks or other Threaded object.
- * If later accessed from said Threaded object, you will be operating on a COPY OF THE OBJECT, NOT THE ORIGINAL OBJECT.
- * If you want to store non-serializable objects to access when the task completes, store them using
+ * If you want to store non-thread-safe objects to access when the task completes, store them using
  * {@link AsyncTask::storeLocal}.
- *
- * WARNING: Arrays are converted to Volatile objects when assigned as members of Threaded objects.
- * Keep this in mind when using arrays stored as members of your AsyncTask.
  */
-abstract class AsyncTask extends \Threaded{
+abstract class AsyncTask extends \ThreadedRunnable{
 	/**
 	 * @var \ArrayObject|mixed[]|null object hash => mixed data
 	 * @phpstan-var \ArrayObject<int, array<string, mixed>>|null
@@ -71,7 +66,10 @@ abstract class AsyncTask extends \Threaded{
 	/** @var AsyncWorker|null $worker */
 	public $worker = null;
 
-	public \Threaded $progressUpdates;
+	/**
+	 * @phpstan-var \ThreadedArray<int, string>
+	 */
+	public \ThreadedArray $progressUpdates;
 
 	private string|int|bool|null|float $result = null;
 	private bool $serialized = false;
@@ -164,15 +162,14 @@ abstract class AsyncTask extends \Threaded{
 	 * @param mixed $progress A value that can be safely serialize()'ed.
 	 */
 	public function publishProgress(mixed $progress) : void{
-		$this->progressUpdates[] = igbinary_serialize($progress);
+		$this->progressUpdates[] = igbinary_serialize($progress) ?? throw new \InvalidArgumentException("Progress must be serializable");
 	}
 
 	/**
 	 * @internal Only call from AsyncPool.php on the main thread
 	 */
 	public function checkProgressUpdates() : void{
-		while($this->progressUpdates->count() !== 0){
-			$progress = $this->progressUpdates->shift();
+		while(($progress = $this->progressUpdates->shift()) !== null){
 			$this->onProgressUpdate(igbinary_unserialize($progress));
 		}
 	}
