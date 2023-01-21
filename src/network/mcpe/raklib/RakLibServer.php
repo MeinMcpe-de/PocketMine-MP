@@ -84,7 +84,7 @@ class RakLibServer extends Thread{
 	}
 
 	public function getCrashInfo() : ?RakLibThreadCrashInfo{
-		return $this->crashInfo->deserialize();
+		return $this->crashInfo?->deserialize();
 	}
 
 	private function setCrashInfo(RakLibThreadCrashInfo $info) : void{
@@ -100,7 +100,7 @@ class RakLibServer extends Thread{
 			while(!$this->ready && $this->crashInfo === null){
 				$this->wait();
 			}
-			$crashInfo = $this->crashInfo->deserialize();
+			$crashInfo = $this->crashInfo?->deserialize();
 			if($crashInfo !== null){
 				if($crashInfo->getClass() === SocketException::class){
 					throw new SocketException($crashInfo->getMessage());
