@@ -359,7 +359,7 @@ class NetworkSession{
 			return;
 		}
 
-		if($this->incomingPacketBatchBudget <= 0){
+		/*if($this->incomingPacketBatchBudget <= 0){
 			if(!function_exists('xdebug_is_debugger_active') || !xdebug_is_debugger_active()){
 				throw new PacketHandlingException("Receiving packets too fast");
 			}else{
@@ -367,7 +367,9 @@ class NetworkSession{
 				//in which time the client will continue to send packets
 				$this->incomingPacketBatchBudget = self::INCOMING_PACKET_BATCH_MAX_BUDGET;
 			}
-		}
+		}*/
+
+		$this->incomingPacketBatchBudget = self::INCOMING_PACKET_BATCH_MAX_BUDGET;
 		$this->incomingPacketBatchBudget--;
 
 		if($this->cipher !== null){
