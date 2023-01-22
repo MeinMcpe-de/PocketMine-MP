@@ -75,7 +75,6 @@ $thread = new class($channel) extends \Thread{
 
 $thread->start(PTHREADS_INHERIT_NONE);
 while(!feof($socket)){
-	/** @var string|null $line */
 	$line = $channel->synchronized(function() use ($channel) : ?string{
 		if(count($channel) === 0){
 			$channel->wait(1_000_000);
