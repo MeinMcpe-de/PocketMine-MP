@@ -54,6 +54,7 @@ use pocketmine\block\tile\Note as TileNote;
 use pocketmine\block\tile\ShulkerBox as TileShulkerBox;
 use pocketmine\block\tile\Skull as TileSkull;
 use pocketmine\block\tile\Smoker as TileSmoker;
+use pocketmine\block\utils\LeavesType;
 use pocketmine\block\utils\TreeType;
 use pocketmine\block\utils\WoodType;
 use pocketmine\crafting\FurnaceType;
@@ -99,6 +100,7 @@ use function mb_strtolower;
  * @method static Stair ANDESITE_STAIRS()
  * @method static Wall ANDESITE_WALL()
  * @method static Anvil ANVIL()
+ * @method static Leaves AZALEA_LEAVES()
  * @method static Flower AZURE_BLUET()
  * @method static Bamboo BAMBOO()
  * @method static BambooSapling BAMBOO_SAPLING()
@@ -402,6 +404,7 @@ use function mb_strtolower;
  * @method static TallGrass FERN()
  * @method static Fire FIRE()
  * @method static FletchingTable FLETCHING_TABLE()
+ * @method static Leaves FLOWERING_AZALEA_LEAVES()
  * @method static FlowerPot FLOWER_POT()
  * @method static Froglight FROGLIGHT()
  * @method static FrostedIce FROSTED_ICE()
@@ -485,6 +488,7 @@ use function mb_strtolower;
  * @method static WoodenDoor MANGROVE_DOOR()
  * @method static WoodenFence MANGROVE_FENCE()
  * @method static FenceGate MANGROVE_FENCE_GATE()
+ * @method static Leaves MANGROVE_LEAVES()
  * @method static Wood MANGROVE_LOG()
  * @method static Planks MANGROVE_PLANKS()
  * @method static WoodenPressurePlate MANGROVE_PRESSURE_PLATE()
@@ -624,6 +628,7 @@ use function mb_strtolower;
  * @method static Wall RED_SANDSTONE_WALL()
  * @method static Torch RED_TORCH()
  * @method static Flower RED_TULIP()
+ * @method static Opaque REINFORCED_DEEPSLATE()
  * @method static Reserved6 RESERVED6()
  * @method static DoublePlant ROSE_BUSH()
  * @method static Sand SAND()
@@ -1106,7 +1111,10 @@ final class VanillaBlocks{
 		foreach(TreeType::getAll() as $treeType){
 			$name = $treeType->getDisplayName();
 			self::register($treeType->name() . "_sapling", new Sapling(BlockLegacyIdHelper::getSaplingIdentifier($treeType), $name . " Sapling", $saplingTypeInfo, $treeType));
-			self::register($treeType->name() . "_leaves", new Leaves(BlockLegacyIdHelper::getLeavesIdentifier($treeType), $name . " Leaves", $leavesBreakInfo, $treeType));
+		}
+		foreach(LeavesType::getAll() as $leavesType){
+			$name = $leavesType->getDisplayName();
+			self::register($leavesType->name() . "_leaves", new Leaves(BlockLegacyIdHelper::getLeavesIdentifier($leavesType), $name . " Leaves", $leavesBreakInfo, $leavesType));
 		}
 
 		$sandstoneBreakInfo = new Info(BreakInfo::pickaxe(0.8, ToolTier::WOOD()));
@@ -1194,6 +1202,11 @@ final class VanillaBlocks{
 		self::register("muddy_mangrove_roots", new SimplePillar(new BID(Ids::MUDDY_MANGROVE_ROOTS), "Muddy Mangrove Roots", new Info(BreakInfo::shovel(0.7), [Tags::MUD])));
 		self::register("froglight", new Froglight(new BID(Ids::FROGLIGHT), "Froglight", new Info(new BreakInfo(0.3))));
 		self::register("sculk", new Sculk(new BID(Ids::SCULK), "Sculk", new Info(new BreakInfo(0.6, ToolType::HOE))));
+		self::register("reinforced_deepslate", new class(new BID(Ids::REINFORCED_DEEPSLATE), "Reinforced Deepslate", new Info(new BreakInfo(55.0, ToolType::NONE, 0, 3600.0))) extends Opaque{
+			public function getDropsForCompatibleTool(Item $item) : array{
+				return [];
+			}
+		});
 
 		self::registerBlocksR13();
 		self::registerBlocksR14();
@@ -1503,7 +1516,15 @@ final class VanillaBlocks{
 		self::register("raw_iron", new Opaque(new BID(Ids::RAW_IRON), "Raw Iron Block", new Info(BreakInfo::pickaxe(5, ToolTier::STONE(), 30.0))));
 
 		$deepslateBreakInfo = new Info(BreakInfo::pickaxe(3, ToolTier::WOOD(), 18.0));
-		self::register("deepslate", new SimplePillar(new BID(Ids::DEEPSLATE), "Deepslate", $deepslateBreakInfo));
+		self::register("deepslate", new class(new BID(Ids::DEEPSLATE), "Deepslate", $deepslateBreakInfo) extends SimplePillar{
+			public function getDropsForCompatibleTool(Item $item) : array{
+				return [VanillaBlocks::COBBLED_DEEPSLATE()->asItem()];
+			}
+
+			public function isAffectedBySilkTouch() : bool{
+				return true;
+			}
+		});
 
 		//TODO: parity issue here - in Java this has a hardness of 3.0, but in bedrock it's 3.5
 		self::register("chiseled_deepslate", new Opaque(new BID(Ids::CHISELED_DEEPSLATE), "Chiseled Deepslate", new Info(BreakInfo::pickaxe(3.5, ToolTier::WOOD(), 18.0))));

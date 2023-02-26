@@ -709,8 +709,12 @@ final class BlockTypeIds{
 	public const CHAIN = 10682;
 	public const SCULK = 10683;
 	public const GLOWING_ITEM_FRAME = 10684;
+	public const MANGROVE_LEAVES = 10685;
+	public const AZALEA_LEAVES = 10686;
+	public const FLOWERING_AZALEA_LEAVES = 10687;
+	public const REINFORCED_DEEPSLATE = 10688;
 
-	public const FIRST_UNUSED_BLOCK_ID = 10685;
+	public const FIRST_UNUSED_BLOCK_ID = 10689;
 
 	private static int $nextDynamicId = self::FIRST_UNUSED_BLOCK_ID;
 
